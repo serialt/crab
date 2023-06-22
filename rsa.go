@@ -128,7 +128,3 @@ func RSADecryptOAEPPwd(cipherText, privCipherKey, passwd []byte) (plainText []by
 	}
 	return rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, cipherText, nil)
 }
-
-func RSASign() {
-
-}
