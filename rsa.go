@@ -50,7 +50,7 @@ func GenerateRSAKey(bits int) (priKey, pubKey []byte, err error) {
 }
 
 // GenerateRSAKeyWithPwd 创建带密码的RSA
-func GenerateRSAKeyWithPwd(passwd string, bits int) (priKey, pubKey []byte, err error) {
+func GenerateRSAKeyWithPwd(passwd []byte, bits int) (priKey, pubKey []byte, err error) {
 
 	priWriter := bytes.NewBuffer([]byte{})
 	pubWriter := bytes.NewBuffer([]byte{})
@@ -60,7 +60,7 @@ func GenerateRSAKeyWithPwd(passwd string, bits int) (priKey, pubKey []byte, err 
 		return
 	}
 	x509PrivateKey := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateBlock, err := x509.EncryptPEMBlock(rand.Reader, "RSA PRIVATE KEY", x509PrivateKey, []byte(passwd), x509.PEMCipherAES256)
+	privateBlock, err := x509.EncryptPEMBlock(rand.Reader, "RSA PRIVATE KEY", x509PrivateKey, passwd, x509.PEMCipherAES256)
 	if err != nil {
 		return
 	}
@@ -109,4 +109,26 @@ func RSADecryptOAEP(cipherText, privCipherKey []byte) (plainText []byte, err err
 		return
 	}
 	return rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, cipherText, nil)
+}
+
+// RSADecryptOAEPPwd 私钥解密,带密码
+func RSADecryptOAEPPwd(cipherText, privCipherKey, passwd []byte) (plainText []byte, err error) {
+	block, _ := pem.Decode(privCipherKey)
+	if block == nil {
+		err = fmt.Errorf("failed to parse certificate PEM")
+		return
+	}
+	data, err := x509.DecryptPEMBlock(block, passwd)
+	if err != nil {
+		return
+	}
+	privateKey, err := x509.ParsePKCS1PrivateKey(data)
+	if err != nil {
+		return
+	}
+	return rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, cipherText, nil)
+}
+
+func RSASign() {
+
 }
