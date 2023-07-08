@@ -30,7 +30,7 @@ func TestAESCBC(t *testing.T) {
 	_plaintext, err := AESDecryptCBCBase64(_data, string(aesKey32))
 	t.Logf("plaintext: %s", _plaintext)
 	assert.IsNil(err)
-	assert.Equal(text, plaintext)
+	assert.Equal(string(text), _plaintext)
 
 	// test aes 192
 	data, err = AESEncryptCBC(text, aesKey24)
@@ -46,7 +46,7 @@ func TestAESCBC(t *testing.T) {
 	_plaintext, err = AESDecryptCBCBase64(_data, string(aesKey24))
 	t.Logf("plaintext: %s", _plaintext)
 	assert.IsNil(err)
-	assert.Equal(text, plaintext)
+	assert.Equal(string(text), _plaintext)
 
 	// test aes 128
 	data, err = AESEncryptCBC(text, aesKey16)
@@ -62,7 +62,7 @@ func TestAESCBC(t *testing.T) {
 	_plaintext, err = AESDecryptCBCBase64(_data, string(aesKey16))
 	t.Logf("plaintext: %s", _plaintext)
 	assert.IsNil(err)
-	assert.Equal(text, plaintext)
+	assert.Equal(string(text), _plaintext)
 
 }
 
