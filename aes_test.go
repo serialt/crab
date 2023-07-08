@@ -23,10 +23,28 @@ func TestAESCBC(t *testing.T) {
 	assert.IsNil(err)
 	assert.Equal(text, plaintext)
 
+	//aes 256 base64
+	_data, err := AESEncryptCBCBase64(string(text), string(aesKey32))
+	t.Logf("data: %s, key: %v", string(text), string(aesKey32))
+	assert.IsNil(err)
+	_plaintext, err := AESDecryptCBCBase64(_data, string(aesKey32))
+	t.Logf("plaintext: %s", _plaintext)
+	assert.IsNil(err)
+	assert.Equal(text, plaintext)
+
 	// test aes 192
 	data, err = AESEncryptCBC(text, aesKey24)
 	assert.IsNil(err)
 	plaintext, err = AESDecryptCBC(data, aesKey24)
+	assert.IsNil(err)
+	assert.Equal(text, plaintext)
+
+	//aes 192 base64
+	_data, err = AESEncryptCBCBase64(string(text), string(aesKey24))
+	t.Logf("data: %s, key: %v", string(text), string(aesKey24))
+	assert.IsNil(err)
+	_plaintext, err = AESDecryptCBCBase64(_data, string(aesKey24))
+	t.Logf("plaintext: %s", _plaintext)
 	assert.IsNil(err)
 	assert.Equal(text, plaintext)
 
@@ -36,6 +54,16 @@ func TestAESCBC(t *testing.T) {
 	plaintext, err = AESDecryptCBC(data, aesKey16)
 	assert.IsNil(err)
 	assert.Equal(text, plaintext)
+
+	//aes 128 base64
+	_data, err = AESEncryptCBCBase64(string(text), string(aesKey16))
+	t.Logf("data: %s, key: %v", string(text), string(aesKey16))
+	assert.IsNil(err)
+	_plaintext, err = AESDecryptCBCBase64(_data, string(aesKey16))
+	t.Logf("plaintext: %s", _plaintext)
+	assert.IsNil(err)
+	assert.Equal(text, plaintext)
+
 }
 
 func TestAESCFB(t *testing.T) {

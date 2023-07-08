@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"io"
 )
@@ -25,6 +26,12 @@ func AESEncryptCBC(plaintext, key []byte) (cipherText []byte, err error) {
 
 }
 
+func AESEncryptCBCBase64(plaintext, key string) (cipherText string, err error) {
+	data, err := AESEncryptCBC([]byte(plaintext), []byte(key))
+	cipherText = base64.StdEncoding.EncodeToString(data)
+	return
+}
+
 func AESDecryptCBC(cipherText, key []byte) (plaintext []byte, err error) {
 
 	block, _ := aes.NewCipher(key)
@@ -41,6 +48,16 @@ func AESDecryptCBC(cipherText, key []byte) (plaintext []byte, err error) {
 
 	plaintext = pkcs7UnPadding(plaintext)
 	return
+
+}
+
+func AESDecryptCBCBase64(cipherText, key string) (plaintext string, err error) {
+	_data, err := base64.StdEncoding.DecodeString(cipherText)
+	if err != nil {
+		return
+	}
+	data, err := AESDecryptCBC(_data, []byte(key))
+	return string(data), err
 
 }
 
@@ -160,6 +177,12 @@ func AESEncryptGCM(plaintext, key []byte) (cipherText []byte, err error) {
 
 }
 
+func AESEncryptGCMBase64(plaintext, key string) (cipherText string, err error) {
+	data, err := AESEncryptGCM([]byte(plaintext), []byte(key))
+	cipherText = base64.StdEncoding.EncodeToString(data)
+	return
+}
+
 func AESDecryptGCM(cipherText, key []byte) (plaintext []byte, err error) {
 
 	block, _ := aes.NewCipher(key)
@@ -167,6 +190,16 @@ func AESDecryptGCM(cipherText, key []byte) (plaintext []byte, err error) {
 	nonce, cipherText := cipherText[:aesgcm.NonceSize()], cipherText[aesgcm.NonceSize():]
 	plaintext, err = aesgcm.Open(nil, nonce, cipherText, nil)
 	return
+}
+
+func AESDecryptGCMBase64(cipherText, key string) (plaintext string, err error) {
+	_data, err := base64.StdEncoding.DecodeString(cipherText)
+	if err != nil {
+		return
+	}
+	data, err := AESDecryptGCM(_data, []byte(key))
+	return string(data), err
+
 }
 
 func pkcs7Padding(src []byte, blockSize int) []byte {
