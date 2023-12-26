@@ -12,6 +12,9 @@ func TestTgz(t *testing.T) {
 	untgzFile := "testdata/date-test"
 	assert := internal.NewAssert(t, "Tgz")
 
+	RemoveFile(untgzFile)
+	RemoveFile(dest)
+
 	err := TarGzip(dest, src)
 	assert.IsNil(err)
 	err = UnTarGzip(dest, untgzFile)
