@@ -89,3 +89,30 @@ func TestSha512(t *testing.T) {
 	assert := internal.NewAssert(t, "TestSha512")
 	assert.Equal(expected, sha512)
 }
+
+func TestSha1File(t *testing.T) {
+	file := "testdata/date.txt"
+	expected := "5c7867f844f95508f3f3251ece704b80246ebb96"
+	assert := internal.NewAssert(t, "TestSha1File")
+	result, err := Sha1File(file)
+	assert.IsNil(err)
+	assert.Equal(expected, result)
+}
+
+func TestSha256File(t *testing.T) {
+	file := "testdata/date.txt"
+	expected := "37b2a160d630ec60e2bb80b2ae90df7dddd4717a2a047465aa39db34a9a9a349"
+	assert := internal.NewAssert(t, "TestSha256File")
+	result, err := Sha256File(file)
+	assert.IsNil(err)
+	assert.Equal(expected, result)
+}
+
+func TestSha512File(t *testing.T) {
+	file := "testdata/date.txt"
+	expected := "752f2c3c14310be13d93a0888835364d488090b4e69d8db02f0fb3cbbfc3d2df3e26735530d4ba5d0e53a3c8619d66a00ec742cc3b075e43043ed2c4eeeb31f8"
+	assert := internal.NewAssert(t, "TestSha512File")
+	result, err := Sha512File(file)
+	assert.IsNil(err)
+	assert.Equal(expected, result)
+}

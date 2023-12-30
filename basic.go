@@ -122,3 +122,51 @@ func Sha512(data string) string {
 	sha512.Write([]byte(data))
 	return hex.EncodeToString(sha512.Sum([]byte("")))
 }
+
+// Sha1File return the sha1 value of file
+func Sha1File(file string) (string, error) {
+	fi, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer fi.Close()
+	h := sha1.New()
+	_, err = io.Copy(h, fi)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+
+}
+
+// Sha256File return the sha256 value of file
+func Sha256File(file string) (string, error) {
+	fi, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer fi.Close()
+	h := sha256.New()
+	_, err = io.Copy(h, fi)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+
+}
+
+// Sha512File return the sha512 value of file
+func Sha512File(file string) (string, error) {
+	fi, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer fi.Close()
+	h := sha512.New()
+	_, err = io.Copy(h, fi)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+
+}
