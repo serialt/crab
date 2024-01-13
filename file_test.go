@@ -246,3 +246,60 @@ func TestCurrentPath(t *testing.T) {
 	absPath := CurrentPath()
 	t.Log(absPath)
 }
+
+func TestReadCsvFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestReadCsvFile")
+
+	content, err := ReadCsvFile("./testdata/demo.csv")
+
+	assert.IsNil(err)
+
+	assert.Equal(3, len(content))
+	assert.Equal(3, len(content[0]))
+	assert.Equal("Bob", content[0][0])
+}
+
+func TestWriteCsvFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestWriteCsvFile")
+
+	csvFilePath := "./testdata/test1.csv"
+	content := [][]string{
+		{"Lili", "22", "female"},
+		{"Jim", "21", "male"},
+	}
+
+	err := WriteCsvFile(csvFilePath, content, false)
+	assert.IsNil(err)
+
+	readContent, err := ReadCsvFile(csvFilePath)
+
+	assert.IsNil(err)
+
+	assert.Equal(2, len(readContent))
+	assert.Equal(3, len(readContent[0]))
+	assert.Equal("Lili", readContent[0][0])
+
+	// RemoveFile(csvFilePath)
+}
+
+func TestWriteMapsToCsv(t *testing.T) {
+	assert := internal.NewAssert(t, "TestWriteMapsToCSV")
+
+	csvFilePath := "./testdata/test4.csv"
+	records := []map[string]string{
+		{"Name": "Lili", "Age": "22", "gender": "female"},
+		{"Name": "Jim", "Age": "21", "gender": "male"},
+	}
+
+	err := WriteMapsToCsv(csvFilePath, records, false, ';')
+
+	assert.IsNil(err)
+
+	content, err := ReadCsvFile(csvFilePath, ';')
+
+	assert.IsNil(err)
+
+	assert.Equal(3, len(content))
+	assert.Equal(3, len(content[0]))
+	// assert.Equal("Lili", content[1][0])
+}

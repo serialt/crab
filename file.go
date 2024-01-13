@@ -3,6 +3,8 @@ package crab
 import (
 	"archive/zip"
 	"bufio"
+	"bytes"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -56,7 +58,8 @@ func CreateFile(path string) bool {
 // CreateDir create directory in absolute path. param `absPath` like /a/, /a/b/.
 // Play: https://go.dev/play/p/qUuCe1OGQnM
 func CreateDir(absPath string) error {
-	return os.MkdirAll(path.Dir(absPath), os.ModePerm)
+	// return os.MkdirAll(path.Dir(absPath), os.ModePerm)
+	return os.MkdirAll(absPath, os.ModePerm)
 }
 
 // MkDir 创建文件夹,支持x/a/a  多层级
@@ -258,9 +261,34 @@ func ListFileNames(path string) ([]string, error) {
 	return result, nil
 }
 
+// IsZipFile checks if file is zip or not.
+// Play: https://go.dev/play/p/9M0g2j_uF_e
+func IsZipFile(filepath string) bool {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	buf := make([]byte, 4)
+	if n, err := f.Read(buf); err != nil || n < 4 {
+		return false
+	}
+
+	return bytes.Equal(buf, []byte("PK\x03\x04"))
+}
+
 // Zip create zip file, fpath could be a single file or a directory.
 // Play: https://go.dev/play/p/j-3sWBp8ik_P
-func Zip(fpath string, destPath string) error {
+func Zip(path string, destPath string) error {
+	if IsDir(path) {
+		return zipFolder(path, destPath)
+	}
+
+	return zipFile(path, destPath)
+}
+
+func zipFile(filePath string, destPath string) error {
 	zipFile, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -270,7 +298,33 @@ func Zip(fpath string, destPath string) error {
 	archive := zip.NewWriter(zipFile)
 	defer archive.Close()
 
-	err = filepath.Walk(fpath, func(path string, info os.FileInfo, err error) error {
+	return addFileToArchive1(filePath, archive)
+}
+
+func zipFolder(folderPath string, destPath string) error {
+	outFile, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	w := zip.NewWriter(outFile)
+
+	err = addFileToArchive2(w, folderPath, "")
+	if err != nil {
+		return err
+	}
+
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addFileToArchive1(fpath string, archive *zip.Writer) error {
+	err := filepath.Walk(fpath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -286,29 +340,52 @@ func Zip(fpath string, destPath string) error {
 			header.Name += "/"
 		} else {
 			header.Method = zip.Deflate
-		}
-
-		writer, err := archive.CreateHeader(header)
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() {
+			writer, err := archive.CreateHeader(header)
+			if err != nil {
+				return err
+			}
 			file, err := os.Open(path)
 			if err != nil {
 				return err
 			}
 			defer file.Close()
-			_, err = io.Copy(writer, file)
-			if err != nil {
+			if _, err := io.Copy(writer, file); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+	return err
+}
 
+func addFileToArchive2(w *zip.Writer, basePath, baseInZip string) error {
+	files, err := os.ReadDir(basePath)
 	if err != nil {
 		return err
+	}
+	if !strings.HasSuffix(basePath, "/") {
+		basePath = basePath + "/"
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			dat, err := os.ReadFile(basePath + file.Name())
+			if err != nil {
+				return err
+			}
+
+			f, err := w.Create(baseInZip + file.Name())
+			if err != nil {
+				return err
+			}
+			_, err = f.Write(dat)
+			if err != nil {
+				return err
+			}
+		} else if file.IsDir() {
+			newBase := basePath + file.Name() + "/"
+			addFileToArchive2(w, newBase, baseInZip+file.Name()+"/")
+		}
 	}
 
 	return nil
@@ -683,4 +760,108 @@ func DirSize(path string) (int64, error) {
 		return err
 	})
 	return size, err
+}
+
+// ReadCsvFile read file content into slice.
+// Play: https://go.dev/play/p/OExTkhGEd3_u
+func ReadCsvFile(filepath string, delimiter ...rune) ([][]string, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	reader := csv.NewReader(f)
+	if len(delimiter) > 0 {
+		reader.Comma = delimiter[0]
+	}
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+// WriteCsvFile write content to target csv file.
+// append: append to existing csv file
+// delimiter: specifies csv delimiter
+// Play: https://go.dev/play/p/dAXm58Q5U1o
+func WriteCsvFile(filepath string, records [][]string, append bool, delimiter ...rune) error {
+	flag := os.O_RDWR | os.O_CREATE
+
+	if append {
+		flag = flag | os.O_APPEND
+	}
+
+	f, err := os.OpenFile(filepath, flag, 0644)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	writer := csv.NewWriter(f)
+	// 设置默认分隔符为逗号，除非另外指定
+	if len(delimiter) > 0 {
+		writer.Comma = delimiter[0]
+	} else {
+		writer.Comma = ','
+	}
+
+	// 遍历所有记录并处理包含分隔符或双引号的单元格
+	for i := range records {
+		for j := range records[i] {
+			records[i][j] = escapeCSVField(records[i][j], writer.Comma)
+		}
+	}
+
+	return writer.WriteAll(records)
+}
+
+// escapeCSVField 处理单元格内容，如果包含分隔符，则用双引号包裹
+func escapeCSVField(field string, delimiter rune) string {
+	// 替换所有的双引号为两个双引号
+	escapedField := strings.ReplaceAll(field, "\"", "\"\"")
+
+	// 如果字段包含分隔符、双引号或换行符，用双引号包裹整个字段
+	if strings.ContainsAny(escapedField, string(delimiter)+"\"\n") {
+		escapedField = fmt.Sprintf("\"%s\"", escapedField)
+	}
+
+	return escapedField
+}
+
+// WriteMapsToCsv write slice of map to csv file.
+// Play: todo
+func WriteMapsToCsv(filepath string, records []map[string]string, append_to_existing_file bool, delimiter ...rune) error {
+	var datas_to_write [][]string
+	// 标题（列名）
+	var headers []string
+	if len(records) > 0 {
+		for key := range records[0] {
+			headers = append(headers, key)
+		}
+	}
+	// 追加模式不重复写字段名
+	if !append_to_existing_file {
+		datas_to_write = append(datas_to_write, headers)
+	}
+	// 写入数据行
+	for _, record := range records {
+		var row []string
+		for _, header := range headers {
+			row = append(row, record[header])
+		}
+		datas_to_write = append(datas_to_write, row)
+	}
+	// 提取自定义分隔符
+	var sep rune
+	if len(delimiter) > 0 {
+		sep = delimiter[0]
+	} else {
+		sep = ','
+	}
+	return WriteCsvFile(filepath, datas_to_write, append_to_existing_file, sep)
 }
