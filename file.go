@@ -5,11 +5,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -540,39 +540,24 @@ func FileParentPath(filePath string) string {
 	return filePath[0:strings.LastIndex(filePath, "/")]
 }
 
-// ReadFile 读文件
-func ReadFile(filename string) ([]byte, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	contentByte, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	return contentByte, nil
-}
-
 // WriteFile 写文件
-func WriteFile(filename string, data []byte, perm os.FileMode) error {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, perm)
-	if err != nil {
-		return err
-	}
-	if _, err := f.Write(data); err != nil {
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return nil
+func WriteFile(filename string, data []byte) error {
+	return os.WriteFile(filename, data, 0644)
 }
 
 // WriteStringToFile write string to file
-func WriteStringToFile(content, path string, mode os.FileMode) (err error) {
-	bytes := []byte(content)
-	return ioutil.WriteFile(path, bytes, mode)
+func WriteStringToFile(filename, data string, mode os.FileMode) (err error) {
+	return os.WriteFile(filename, []byte(data), mode)
+}
+
+// WriteJsonToFile write json to file
+func WriteJsonToFile(filename string, data any, mode os.FileMode) (err error) {
+	byteData, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	os.WriteFile(filename, byteData, mode)
+	return
 }
 
 // FilePathExists 判断路径是否存在
@@ -648,7 +633,8 @@ func GetFilepaths(dir string) ([]string, error) {
 // FileLoopDirs 遍历目录下的所有子目录，即返回pathname下面的所有目录，目录为绝对路径
 func FileLoopDirs(pathname string) ([]string, error) {
 	var s []string
-	rd, err := ioutil.ReadDir(pathname)
+
+	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		return s, err
 	}
@@ -664,7 +650,7 @@ func FileLoopDirs(pathname string) ([]string, error) {
 // FileLoopOneDirs 遍历目录下的所有子目录，即返回pathname下面的所有目录，目录为相对路径
 func FileLoopOneDirs(pathname string) ([]string, error) {
 	var s []string
-	rd, err := ioutil.ReadDir(pathname)
+	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		return s, err
 	}
@@ -679,7 +665,7 @@ func FileLoopOneDirs(pathname string) ([]string, error) {
 // FileLoopFiles 遍历文件夹及子文件夹下的所有文件，即返回pathname目录下所有的文件，文件名为绝对路径
 func FileLoopFiles(pathname string) ([]string, error) {
 	var s []string
-	rd, err := ioutil.ReadDir(pathname)
+	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		return s, err
 	}
@@ -702,7 +688,7 @@ func FileLoopFiles(pathname string) ([]string, error) {
 // FileLoopFileNames 遍历文件夹及子文件夹下的所有文件名，即返回pathname目录下所有的文件，文件名为相对路径
 func FileLoopFileNames(pathname string) ([]string, error) {
 	var s []string
-	rd, err := ioutil.ReadDir(pathname)
+	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		return s, err
 	}

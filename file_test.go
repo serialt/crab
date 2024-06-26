@@ -67,6 +67,43 @@ func TestIsDir(t *testing.T) {
 		assert.Equal(expected[i], actual)
 	}
 }
+func TestMkDir(t *testing.T) {
+	assert := internal.NewAssert(t, "TestMkDir")
+	cases := "testdata/hello"
+
+	actual := MkDir(cases)
+	if actual == nil {
+		if IsDir(cases) {
+			assert.Equal("true", "true")
+			RemoveFile(cases)
+		}
+	} else {
+		assert.Equal("true", "false")
+	}
+
+}
+func TestIsFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestIsFile")
+
+	cases := []string{"./go.mod", "./testccc"}
+	expected := []bool{true, false}
+
+	for i := 0; i < len(cases); i++ {
+		actual := IsFile(cases[i])
+		assert.Equal(expected[i], actual)
+	}
+}
+func TestIsAbsPath(t *testing.T) {
+	assert := internal.NewAssert(t, "IsAbsPath")
+
+	cases := []string{"/tmp", "./go.mod"}
+	expected := []bool{true, false}
+
+	for i := 0; i < len(cases); i++ {
+		actual := IsAbsPath(cases[i])
+		assert.Equal(expected[i], actual)
+	}
+}
 
 func TestRemoveFile(t *testing.T) {
 	assert := internal.NewAssert(t, "TestRemoveFile")
@@ -245,6 +282,54 @@ func TestListFileNames(t *testing.T) {
 func TestCurrentPath(t *testing.T) {
 	absPath := CurrentPath()
 	t.Log(absPath)
+}
+
+func TestWriteFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestWriteFile")
+	filename := "./testdata/writeFile.txt"
+	txtData := "hello,world"
+	result := WriteFile(filename, []byte(txtData))
+	assert.IsNil(result)
+
+	data, err := os.ReadFile(filename)
+	assert.IsNil(err)
+	assert.Equal(string(data), txtData)
+	RemoveFile(filename)
+
+}
+
+func TestWriteStringToFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestWriteStringToFile")
+	filename := "./testdata/writeStringToFile.txt"
+	txtData := "hello,world"
+	CreateFile(filename)
+	result := WriteStringToFile(filename, txtData, 0644)
+	t.Logf("TestWriteStringToFile: %v", result)
+	assert.IsNil(result)
+
+	data, err := os.ReadFile(filename)
+	assert.IsNil(err)
+
+	assert.Equal(string(data), txtData)
+	RemoveFile(filename)
+
+}
+
+func TestWriteJsonToFile(t *testing.T) {
+	assert := internal.NewAssert(t, "TestWriteJsonToFile")
+	filename := "./testdata/writeJsonToFile.txt"
+	txtData := `{"hello": "world"}`
+	CreateFile(filename)
+	result := WriteStringToFile(filename, txtData, 0644)
+	t.Logf("TestWriteStringToFile: %v", result)
+	assert.IsNil(result)
+
+	data, err := os.ReadFile(filename)
+	assert.IsNil(err)
+
+	assert.Equal(string(data), txtData)
+	RemoveFile(filename)
+
 }
 
 func TestReadCsvFile(t *testing.T) {
