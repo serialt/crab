@@ -104,3 +104,13 @@ func TestToSlice(t *testing.T) {
 	assert.Equal([]string{"a"}, ToSlice(str1))
 	assert.Equal([]string{"a", "b"}, ToSlice(str1, str2))
 }
+
+func TestSliceDiff(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "TestSliceDiff")
+	slice1 := []int64{1, 2, 3}
+	slice2 := []int64{3, 2, 5, 6}
+	result := []int64{1}
+
+	assert.Equal(result, SliceDiff(slice1, slice2))
+}

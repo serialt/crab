@@ -142,3 +142,13 @@ func ccc() {
 // 	idx = random.RandInt(0, len(slice))
 // 	return slice[idx], idx
 // }
+
+func SliceDiff[T comparable](slice, comparedSlice []T) []T {
+	result := []T{}
+	for _, v := range slice {
+		if !slices.Contains(comparedSlice, v) {
+			result = append(result, v)
+		}
+	}
+	return result
+}
