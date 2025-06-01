@@ -31,3 +31,11 @@ func TestIsPublicIPv4(t *testing.T) {
 	assert.Equal(false, IsPublicIPv4(ip3))
 	assert.Equal(false, IsPublicIPv4(ip4))
 }
+
+func TestGetMyIPLocation(t *testing.T) {
+	assert := internal.NewAssert(t, "TestGetMyIPLocation")
+
+	loc, err := GetMyIPLocation()
+	assert.IsNil(err)
+	t.Logf("Get ip Info, data: %v", Marshal(loc))
+}

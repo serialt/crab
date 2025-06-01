@@ -128,9 +128,6 @@ func ToSlice[T any](items ...T) []T {
 
 	return result
 }
-func ccc() {
-	// slices.
-}
 
 // // Random get a random item of slice, return idx=-1 when slice is empty
 // // Play: https://go.dev/play/p/UzpGQptWppw

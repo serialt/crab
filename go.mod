@@ -1,10 +1,11 @@
 module github.com/serialt/crab
 
-go 1.23
+go 1.23.0
 
 require (
-	golang.org/x/crypto v0.26.0
-	golang.org/x/text v0.17.0
+	github.com/shopspring/decimal v1.4.0
+	golang.org/x/crypto v0.38.0
+	golang.org/x/text v0.25.0
 )
 
-require golang.org/x/sys v0.24.0 // indirect
+require golang.org/x/sys v0.33.0 // indirect
