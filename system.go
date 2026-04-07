@@ -1,14 +1,13 @@
 package crab
 
 import (
-	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -111,32 +110,19 @@ func ExecCmd(binName string, args []string, workDir ...string) (string, error) {
 }
 
 // RunCommandWithTimeout 带超时控制的执行shell命令
-func RunCommandWithTimeout(timeout int, workDir string, command string, args ...string) (stdout, stderr string, isKilled bool) {
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd := exec.Command(command, args...)
+func RunCommandWithTimeout(timeout int, workDir string, command string) (string, error) {
+	if timeout <= 0 {
+		timeout = 3
+	}
+	timeoutDuration := time.Duration(timeout) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-c", command)
 	if len(workDir) > 0 {
 		cmd.Dir = workDir
 	}
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-	cmd.Start()
-	done := make(chan error)
-	go func() {
-		done <- cmd.Wait()
-	}()
-	after := time.After(time.Duration(timeout) * time.Millisecond)
-	select {
-	case <-after:
-		cmd.Process.Signal(syscall.SIGINT)
-		time.Sleep(10 * time.Millisecond)
-		cmd.Process.Kill()
-		isKilled = true
-	case <-done:
-		isKilled = false
-	}
-	stdout = string(bytes.TrimSpace(stdoutBuf.Bytes())) // Remove \n
-	stderr = string(bytes.TrimSpace(stderrBuf.Bytes())) // Remove \n
-	return
+	resultData, err := cmd.CombinedOutput()
+	return string(resultData), err
 }
 
 // GetOsBits return current os bits (32 or 64).
